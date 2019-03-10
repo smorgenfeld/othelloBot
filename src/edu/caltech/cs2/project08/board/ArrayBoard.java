@@ -16,6 +16,7 @@ public class ArrayBoard implements Board {
     public static final int[][] OFFSETS = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
 
     public int[][] board;
+    private int[][] scoreMatrix;
     private int sideToMove;
     private IStack<UndoInfo> moves;
 
@@ -46,6 +47,17 @@ public class ArrayBoard implements Board {
                 }
             }
         }
+        scoreMatrix = new int[][]{
+                {120, -20, 20,  5,  5, 20, -20, 120},
+                {-20, -40, -5, -5, -5, -5, -40, -20},
+                {20,  -5, 15,  3,  3, 15,  -5,  20},
+                {5,  -5,  3,  3,  3,  3,  -5,   5},
+                {5,  -5,  3,  3,  3,  3,  -5,   5},
+                {20,  -5, 15,  3,  3, 15,  -5,  20},
+                {-20, -40, -5, -5, -5, -5, -40, -20},
+                {120, -20, 20,  5,  5, 20, -20, 120}
+        };
+
 
         // Set the side to move.
         sideToMove = pos.charAt(65) == BLACK_CHAR ? BLACK : WHITE;
@@ -218,67 +230,6 @@ public class ArrayBoard implements Board {
         return num;
     }
 
-    public int getCorners() {
-        int num = 0;
-        int target = WHITE;
-        if (isBlackMove()) {
-            target = BLACK;
-        }
-        if (board[0][0] == target) {
-            num += 3;
-        }
-        if (board[7][7] == target) {
-            num += 3;
-        }
-        if (board[0][7] == target) {
-            num += 3;
-        }
-        if (board[7][0] == target) {
-            num += 3;
-        }
-
-        if (board[1][0] == target) {
-            num -= 1;
-        }
-        if (board[1][1] == target) {
-            num -= 1;
-        }
-        if (board[0][1] == target) {
-            num -= 1;
-        }
-
-        if (board[7][6] == target) {
-            num -= 1;
-        }
-        if (board[6][6] == target) {
-            num -= 1;
-        }
-        if (board[6][7] == target) {
-            num -= 1;
-        }
-
-        if (board[0][6] == target) {
-            num -= 1;
-        }
-        if (board[1][6] == target) {
-            num -= 1;
-        }
-        if (board[1][7] == target) {
-            num -= 1;
-        }
-
-        if (board[6][0] == target) {
-            num -= 1;
-        }
-        if (board[6][1] == target) {
-            num -= 1;
-        }
-        if (board[7][1] == target) {
-            num -= 1;
-        }
-        return num;
-    }
-
     public boolean isGameOver() {
         int[] diskCounts = diskCount();
         int numBlack = diskCounts[0];
@@ -295,6 +246,16 @@ public class ArrayBoard implements Board {
         int numBlack = diskCounts[0];
         int numWhite = diskCounts[1];
         return numBlack - numWhite;
+    }
+
+    public int getAdjScore() {
+        int sum = 0;
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                sum += board[i][j]*scoreMatrix[i][j];
+            }
+        }
+        return sum;
     }
 
     public int getNumBlack() {

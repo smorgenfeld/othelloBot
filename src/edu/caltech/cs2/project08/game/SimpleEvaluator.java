@@ -4,8 +4,7 @@ public class SimpleEvaluator<B extends Board> implements Evaluator<B> {
     static final float BOARD_SCORE_MOD = 0.5f;
     static final float MOBILITY_SCORE_MOD = 2;
     static final float FRONTIER_DISK_MOD = -0.5f;
-    static final float CORNERS = 3;
-    static final int MIDGAME = 15;
+    static final int MIDGAME = 50;
     static float midgameMod = 1;
     /**
      * A simple parity edu.caltech.cs2.board evaluation relative to the side to move.
@@ -20,9 +19,13 @@ public class SimpleEvaluator<B extends Board> implements Evaluator<B> {
      */
     public int eval(B board) {
         if (board.getNumBlack() + board.getNumWhite() < MIDGAME) {
-            midgameMod = -0.25f;
+            midgameMod = 0;
         }
-        int score = (int) (board.getScore() * BOARD_SCORE_MOD * midgameMod * (board.isBlackMove() ? 1 : -1)+ board.getMoves().size() * MOBILITY_SCORE_MOD + board.getFrontierDiskNum() * FRONTIER_DISK_MOD+board.getCorners()*CORNERS);
+        if (board.isGameOver() && board.getScore()*(board.isBlackMove() ? 1 : -1) > 0) {
+            return 999*(board.isBlackMove() ? 1 : -1);
+        }
+        //int score = (int) (board.getScore() * BOARD_SCORE_MOD * midgameMod * (board.isBlackMove() ? 1 : -1)+ board.getMoves().size() * MOBILITY_SCORE_MOD + board.getFrontierDiskNum() * FRONTIER_DISK_MOD+(board.isBlackMove() ? -1 : 1)*board.getAdjScore());
+        int score = (board.isBlackMove() ? -1 : 1)*board.getAdjScore();
         return score;
     }
 }

@@ -56,7 +56,7 @@ public interface Board {
 
     int getFrontierDiskNum();
 
-    int getCorners();
+    int getAdjScore();
 
     // Overrides
     String toString();
