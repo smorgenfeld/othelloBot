@@ -24,7 +24,7 @@ public class Bot {
 
         // Make sure you set all of the necessary attributes on your searcher!
         searcher = new AlphaBetaSearcher<>();
-        searcher.setDepth(8);
+        searcher.setDepth(4);
         searcher.setEvaluator(evaluator);
     }
 

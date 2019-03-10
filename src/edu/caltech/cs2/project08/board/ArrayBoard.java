@@ -218,6 +218,67 @@ public class ArrayBoard implements Board {
         return num;
     }
 
+    public int getCorners() {
+        int num = 0;
+        int target = WHITE;
+        if (isBlackMove()) {
+            target = BLACK;
+        }
+        if (board[0][0] == target) {
+            num += 3;
+        }
+        if (board[7][7] == target) {
+            num += 3;
+        }
+        if (board[0][7] == target) {
+            num += 3;
+        }
+        if (board[7][0] == target) {
+            num += 3;
+        }
+
+        if (board[1][0] == target) {
+            num -= 1;
+        }
+        if (board[1][1] == target) {
+            num -= 1;
+        }
+        if (board[0][1] == target) {
+            num -= 1;
+        }
+
+        if (board[7][6] == target) {
+            num -= 1;
+        }
+        if (board[6][6] == target) {
+            num -= 1;
+        }
+        if (board[6][7] == target) {
+            num -= 1;
+        }
+
+        if (board[0][6] == target) {
+            num -= 1;
+        }
+        if (board[1][6] == target) {
+            num -= 1;
+        }
+        if (board[1][7] == target) {
+            num -= 1;
+        }
+
+        if (board[6][0] == target) {
+            num -= 1;
+        }
+        if (board[6][1] == target) {
+            num -= 1;
+        }
+        if (board[7][1] == target) {
+            num -= 1;
+        }
+        return num;
+    }
+
     public boolean isGameOver() {
         int[] diskCounts = diskCount();
         int numBlack = diskCounts[0];

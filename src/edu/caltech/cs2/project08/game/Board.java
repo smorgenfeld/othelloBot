@@ -56,6 +56,8 @@ public interface Board {
 
     int getFrontierDiskNum();
 
+    int getCorners();
+
     // Overrides
     String toString();
     int hashCode();
