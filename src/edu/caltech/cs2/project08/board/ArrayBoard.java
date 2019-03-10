@@ -190,6 +190,34 @@ public class ArrayBoard implements Board {
         return new int[]{numBlack, numWhite};
     }
 
+
+    public int getFrontierDiskNum() {
+        int num = 0;
+        int target = WHITE;
+        if (isBlackMove()) {
+            target = BLACK;
+        }
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (board[i][j] == target) {
+                    if (i > 0 && board[i-1][j] == 0) {
+                        num++;
+                    }
+                    if (j > 0 && board[i][j-1] == 0) {
+                        num++;
+                    }
+                    if (i < 7 && board[i+1][j] == 0) {
+                        num++;
+                    }
+                    if (j < 7 && board[i][j+1] == 0) {
+                        num++;
+                    }
+                }
+            }
+        }
+        return num;
+    }
+
     public boolean isGameOver() {
         int[] diskCounts = diskCount();
         int numBlack = diskCounts[0];

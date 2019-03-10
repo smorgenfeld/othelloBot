@@ -22,7 +22,7 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
         int bestVal = -INFINITY;
         int curVal;
         for (Move child : childs) {
-            curVal = prune(evaluator, board, 4, -INFINITY, INFINITY);
+            curVal = prune(evaluator, board, depth, -INFINITY, INFINITY);
             if (curVal > bestVal) {
                 bestVal = curVal;
                 bestMove = child;
@@ -33,7 +33,7 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
 
     private static <B extends Board> int prune(Evaluator<B> evaluator, B board, int curDepth, int a, int b) {
         if (curDepth == 0 || board.isGameOver()) {
-            return board.getScore();
+            return evaluator.eval(board);
         }
         int value;
         if (board.isBlackMove()) {
@@ -41,11 +41,12 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
             for (Move child : board.getMoves()) {
                 board.makeMove(child);
                 value = Math.max(value, prune(evaluator, board, curDepth - 1, a, b));
+                board.undoMove();
                 a = Math.max(a, value);
                 if (a >= b) {
                     break;
                 }
-                board.undoMove();
+
             }
             return value;
         }
@@ -55,10 +56,11 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
                 board.makeMove(child);
                 value = Math.min(value, prune(evaluator, board, curDepth - 1, a, b));
                 b = Math.min(b, value);
+                board.undoMove();
                 if (a >= b) {
                     break;
                 }
-                board.undoMove();
+
             }
             return value;
         }

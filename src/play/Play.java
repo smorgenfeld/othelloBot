@@ -21,20 +21,21 @@ public class Play {
     public static boolean isConnected = false;
 
     public static void main(String[] args) {
+
         games = new ArrayList<>();
         Bot bot = new Bot();
         try {
+
             IO.Options opts = new IO.Options();
             opts.reconnection = true;
             opts.reconnectionDelay = 1000;
             opts.timeout = -1;
-
             Socket socket = IO.socket(SERVER + "?bot=" + Bot.BOT_NAME + "&pw=" + Bot.BOT_PASS, opts);
             socket.on(Socket.EVENT_CONNECT, (arg) -> {
-                //System.out.println("Connected to server.");
+                System.out.println("Connected to server.");
                 isConnected = true;
             }).on(Socket.EVENT_DISCONNECT, (arg) -> {
-                //System.out.println("Disconnected from server.");
+                System.out.println("Disconnected from server.");
             }).on("bad_connect", (arg) -> {
                 try {
                     System.out.println(((JSONObject) arg[1]).getString("message"));

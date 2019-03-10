@@ -10,8 +10,8 @@ import edu.caltech.cs2.project08.game.Move;
 import edu.caltech.cs2.project08.game.SimpleEvaluator;
 
 public class Bot {
-    public static final String BOT_NAME = "FILL_IN_YOUR_NAME_FROM_SERVER";
-    public static final String BOT_PASS = "FILL_IN_YOUR_PASSWORD_FROM_SERVER";
+    public static final String BOT_NAME = "garlicBread";
+    public static final String BOT_PASS = "rzAapFfpmgMR";
 
     private Evaluator<ArrayBoard> evaluator;
     private BoardFactory<ArrayBoard> boardFactory;
