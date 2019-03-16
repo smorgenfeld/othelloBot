@@ -30,20 +30,20 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
         //}
         //Move k = monteCarloTree(board, 10000);
         //System.out.println(k);
-        return prune(evaluator, board, ply, new BestMove(null,-INFINITY), INFINITY).move;
+        return prune(evaluator, board, ply, new BestMove(new Move(Move.PASS),-INFINITY), INFINITY).move;
     }
     private static <B extends Board> BestMove prune(Evaluator<B> evaluator, B board, int curDepth, BestMove a, int b) {
-        if (curDepth <= 0 || board.isGameOver()) {
-            return new BestMove(null, evaluator.eval(board));
+        if (curDepth == 0 || board.isGameOver()) {
+            return new BestMove(a.move, evaluator.eval(board));
         }
         IDeque<Move> moves = board.getMoves();
-        BestMove value=new BestMove(board.getMoves().peek(),-INFINITY);
+        BestMove value;
+
         for (Move child : moves) {
+            a.move = child;
             board.makeMove(child);
-            value = prune(evaluator, board, curDepth - 1, new BestMove(child, -b), -a.score);
+            value = new BestMove(child, -prune(evaluator, board, curDepth - 1, new BestMove(child, -b), -a.score).score);
             board.undoMove();
-            value.score*=-1;
-            value.move = child;
             if (value.score > a.score) {
                 a=value;
             }
@@ -53,6 +53,9 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
         }
         return a;
     }
+
+
+
     private static <B extends Board> BestMove alphaBeta(Evaluator<B> evaluator, B board, int depth) {
         BestMove toReturn = new BestMove(board.getMoves().peek(), -INFINITY);
         int curScore=1;
