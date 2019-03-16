@@ -1,5 +1,6 @@
 package edu.caltech.cs2.project08.game;
 
+import edu.caltech.cs2.project08.board.ArrayBoard;
 import edu.caltech.cs2.project08.interfaces.IDeque;
 
 public interface Board {
@@ -16,7 +17,10 @@ public interface Board {
      * @param m move to make
      */
     void makeMove(Move m);
-
+    void setBoard(ArrayBoard board);
+    int[][] getBoard();
+    public int checkStableSide();
+    int getScoreVanilla();
     /**
      * Undo the last move that was made.
      */

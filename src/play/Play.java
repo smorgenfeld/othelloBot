@@ -7,8 +7,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import javax.swing.*;
+import java.io.*;
 import java.net.*;
 import java.util.*;
 
@@ -19,11 +19,12 @@ public class Play {
     public static JSONArray bots;
     public static List<String> games;
     public static boolean isConnected = false;
+    public static Bot bot;
 
     public static void main(String[] args) {
 
         games = new ArrayList<>();
-        Bot bot = new Bot();
+        bot = new Bot();
         try {
 
             IO.Options opts = new IO.Options();
@@ -136,9 +137,17 @@ public class Play {
                     socket.emit("challenge", parts[1]);
                     WAITING = true;
                 } else if (parts[0].equals("scores")) {
-                    printResults();
+                    printResults("");
                 } else if (parts[0].equals("who")) {
                     printBots();
+                } else if (parts[0].equals("run")) {
+                    try {
+                        runAlgorithm(socket, parts[1]);
+                    } catch (Exception e) {
+                        System.out.println("fuck!");
+                    }
+                } else if (parts[0].equals("quit")) {
+                    socket.disconnect();
                 }
                 if (!WAITING) {
                     System.out.print(">> ");
@@ -166,7 +175,7 @@ public class Play {
         }
     }
 
-    public static void printResults() {
+    public static String printResults(String toFind) {
         try {
             URL url = new URL(SERVER + "results?bot=" + Bot.BOT_NAME);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -180,8 +189,9 @@ public class Play {
                 content.append(inputLine);
             }
             in.close();
-
-            System.out.println("Results:");
+            if (toFind.equals("")) {
+                System.out.println("Results:");
+            }
 
             Map<String, String> scores = new TreeMap<>();
 
@@ -204,12 +214,107 @@ public class Play {
             for (String k : scores.keySet()) {
                 String result = scores.get(k);
                 int len = Math.max(0, result.length() - 20);
-                System.out.println("    " + k + ": " + " ".repeat(l - k.length() + 1) + result.substring(len));
+                if (toFind.equals("")) {
+                    System.out.println("    " + k + ": " + " ".repeat(l - k.length() + 1) + result.substring(len));
+                }
+                else if (k.equals(toFind)) {
+                    System.out.println(result.substring(len) + " " + k);
+                    return result.substring(len);
+                }
             }
         } catch (JSONException e) {
             System.out.println("Error parsing JSON data.");
         } catch (Exception e) {
             System.out.println("Error retrieving scores.");
         }
+        return null;
     }
+
+    public static void runAlgorithm(Socket socket, String toChallenge) throws Exception {
+        for (int k = 0; k < 50; k++) {
+            Random rand = new Random();
+            BufferedReader saveFile = new BufferedReader(new FileReader("save.txt"));
+            int botNum = 5;
+            botBoi[] fam = new botBoi[botNum];
+            for (int i = 0; i < botNum; i++) {
+                fam[i] = new botBoi();
+                fam[i].bot.evaluator.preMidGameMod = Float.parseFloat(saveFile.readLine());
+                fam[i].bot.evaluator.postMidGameMod = Float.parseFloat(saveFile.readLine());
+                fam[i].bot.evaluator.MOBILITY_SCORE_MOD = Float.parseFloat(saveFile.readLine());
+                fam[i].bot.evaluator.FRONTIER_DISK_MOD = Float.parseFloat(saveFile.readLine());
+                fam[i].bot.evaluator.MIDGAME = Integer.parseInt(saveFile.readLine());
+                fam[i].bot.evaluator.BOARD_SCORE_MOD = Float.parseFloat(saveFile.readLine());
+                fam[i].score = Integer.parseInt(saveFile.readLine());
+            }
+            saveFile.close();
+            //evolve
+            int bestScore = fam[0].score;
+            int worstScore = fam[0].score;
+            botBoi bestBot = fam[0];
+            for (int i = 0; i < botNum; i++) {
+                if (fam[i].score > bestScore) {
+                    bestScore = fam[i].score;
+                    bestBot = fam[i];
+                } else if (fam[i].score < worstScore) {
+                    worstScore = fam[i].score;
+                }
+            }
+            float min = -1*Math.max((int)(10-k/2),1);
+            float max = 1*Math.max((int)(10-k/2),1);
+            for (int i = 0; i < botNum; i++) {
+                if (fam[i].score == worstScore) {
+                    System.out.println(i + "worst");
+                    fam[i] = new botBoi();
+                    fam[i].bot.evaluator.preMidGameMod = bestBot.bot.evaluator.preMidGameMod;
+                    fam[i].bot.evaluator.postMidGameMod = bestBot.bot.evaluator.postMidGameMod;
+                    fam[i].bot.evaluator.MOBILITY_SCORE_MOD = bestBot.bot.evaluator.MOBILITY_SCORE_MOD;
+                    fam[i].bot.evaluator.FRONTIER_DISK_MOD = bestBot.bot.evaluator.FRONTIER_DISK_MOD;
+                    fam[i].bot.evaluator.MIDGAME = bestBot.bot.evaluator.MIDGAME;
+                    fam[i].bot.evaluator.BOARD_SCORE_MOD = bestBot.bot.evaluator.BOARD_SCORE_MOD;
+                    fam[i].score = 0;
+                } else {
+                    fam[i].bot.evaluator.preMidGameMod += min + rand.nextFloat() * (max - min);
+                    fam[i].bot.evaluator.postMidGameMod += min + rand.nextFloat() * (max - min);
+                    fam[i].bot.evaluator.MOBILITY_SCORE_MOD += min + rand.nextFloat() * (max - min);
+                    fam[i].bot.evaluator.FRONTIER_DISK_MOD += min + rand.nextFloat() * (max - min);
+                    fam[i].bot.evaluator.MIDGAME += rand.nextInt((int)(max) + 1) + (int)min;
+                    fam[i].bot.evaluator.BOARD_SCORE_MOD += min + rand.nextFloat() * (max - min);
+                    fam[i].score = 0;
+                }
+            }
+
+            //run games
+            for (int i = 0; i < botNum; i++) {
+                bot = fam[i].bot;
+                bot.lastScore = 0;
+                for (int j = 0; j < 10; j++) {
+                    socket.emit("challenge", toChallenge);
+                    Thread.sleep(5000);
+
+                }
+                String kk = printResults(toChallenge);
+                System.out.println(kk);
+                fam[i].score += -(kk.length() - kk.replace("L", "").length()) + 3*(kk.length() - kk.replace("W", "").length());
+            }
+
+
+            FileWriter toSave = new FileWriter("save.txt");
+            for (int i = 0; i < botNum; i++) {
+                toSave.write(fam[i].bot.evaluator.preMidGameMod + "\n");
+                toSave.write(fam[i].bot.evaluator.postMidGameMod + "\n");
+                toSave.write(fam[i].bot.evaluator.MOBILITY_SCORE_MOD + "\n");
+                toSave.write(fam[i].bot.evaluator.FRONTIER_DISK_MOD + "\n");
+                toSave.write(fam[i].bot.evaluator.MIDGAME + "\n");
+                toSave.write(fam[i].bot.evaluator.BOARD_SCORE_MOD + "\n");
+                toSave.write(fam[i].score + "\n");
+                System.out.println(fam[i].score);
+            }
+            toSave.write(k + "\n");
+            toSave.close();
+
+        }
+    }
+
 }
+
+

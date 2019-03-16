@@ -7,6 +7,8 @@ import edu.caltech.cs2.project08.interfaces.IDeque;
 import edu.caltech.cs2.project08.game.Move;
 import edu.caltech.cs2.project08.interfaces.IStack;
 
+import java.lang.reflect.Array;
+
 public class ArrayBoard implements Board {
     public static final int BLACK = -1;
     public static final int WHITE = -BLACK;
@@ -17,8 +19,8 @@ public class ArrayBoard implements Board {
 
     public int[][] board;
     private int[][] scoreMatrix;
-    private int sideToMove;
-    private IStack<UndoInfo> moves;
+    public int sideToMove;
+    public IStack<UndoInfo> moves;
 
     public ArrayBoard() {
         this(START_POS);
@@ -47,15 +49,16 @@ public class ArrayBoard implements Board {
                 }
             }
         }
-        scoreMatrix = new int[][]{
-                {120, -20, 20,  5,  5, 20, -20, 120},
-                {-20, -40, -5, -5, -5, -5, -40, -20},
-                {20,  -5, 15,  3,  3, 15,  -5,  20},
-                {5,  -5,  3,  3,  3,  3,  -5,   5},
-                {5,  -5,  3,  3,  3,  3,  -5,   5},
-                {20,  -5, 15,  3,  3, 15,  -5,  20},
-                {-20, -40, -5, -5, -5, -5, -40, -20},
-                {120, -20, 20,  5,  5, 20, -20, 120}
+        int scoremod = 800*25;
+        scoreMatrix = new int[][] {
+                {20+scoremod, -3-scoremod, 11, 8, 8, 11, -3-scoremod, 20+scoremod},
+                {-3-scoremod, -7, -4, 1, 1, -4, -7, -3-scoremod},
+                {11, -4, 2, 2, 2, 2, -4, 11},
+                {8, 1, 2, -3, -3, 2, 1, 8},
+                {8, 1, 2, -3, -3, 2, 1, 8},
+                {11, -4, 2, 2, 2, 2, -4, 11},
+                {-3-scoremod, -7, -4, 1, 1, -4, -7, -3-scoremod},
+                {20+scoremod, -3-scoremod, 11, 8, 8, 11, -3-scoremod, 20+scoremod}
         };
 
 
@@ -66,6 +69,14 @@ public class ArrayBoard implements Board {
         moves = new LinkedDeque<>();
     }
 
+    public int[][] getBoard() {
+        return this.board;
+    }
+    public void setBoard(ArrayBoard toSet) {
+        this.board = toSet.board;
+        this.moves = toSet.moves;
+        this.sideToMove = toSet.sideToMove;
+    }
     public void makeMove(Move move) {
         UndoInfo undo = new UndoInfo(move);
 
@@ -245,7 +256,15 @@ public class ArrayBoard implements Board {
         int[] diskCounts = diskCount();
         int numBlack = diskCounts[0];
         int numWhite = diskCounts[1];
-        return numBlack - numWhite;
+        return (numBlack - numWhite)*(isBlackMove() ? 1 : -1);
+    }
+
+    public int getScoreVanilla() {
+        //in black's view
+        int[] diskCounts = diskCount();
+        int numBlack = diskCounts[0];
+        int numWhite = diskCounts[1];
+        return (numBlack - numWhite);
     }
 
     public int getAdjScore() {
@@ -255,7 +274,7 @@ public class ArrayBoard implements Board {
                 sum += board[i][j]*scoreMatrix[i][j];
             }
         }
-        return sum;
+        return sum*(isBlackMove() ? -1 : 1);
     }
 
     public int getNumBlack() {
@@ -322,4 +341,120 @@ public class ArrayBoard implements Board {
             this.move = move;
         }
     }
+
+    public int checkStableSide() {
+        boolean[][] stable = new boolean[8][8];
+        boolean[][] checked = new boolean[8][8];
+        int count = 0;
+        for(int i = 0; i < 8; i++){
+            for(int j = 0; j < 8; j++){
+                checked[i][j] = false;
+                stable[i][j] = false;
+            }
+        }
+        int side = (isBlackMove() ? -1 : 1);
+        for(int i = 0; i < 8; i++){
+            for(int j = 0; j < 8; j++){
+                if(stableCell(i, j, stable, checked,side)){
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
+    private boolean stableCell(int x, int y, boolean[][] stable, boolean[][] checked, int side) {
+        if (checked[x][y]) {
+            return stable[x][y];
+        }
+        checked[x][y] = true;
+        //check row stability
+        if (!(board[x][y]==side)) {
+            stable[x][y] = false;
+            return false;
+        }
+
+        boolean l = true;
+        boolean r = true;
+        for(int i = x+1; i < 8; i++){
+            if(!stableCell(i, y, stable, checked,side)) {
+                r = false;
+                break;
+            }
+        }
+        for(int i = x-1; i >= 0; i--){
+            if(!stableCell(i, y, stable, checked,side)) {
+                l = false;
+                break;
+            }
+        }
+        if (!(r || l)) {
+            stable[x][y] = false;
+            return false;
+        }
+
+        //check column stability
+        boolean u = true;
+        boolean d = true;
+        for(int i = y+1; i < 8; i++){
+            if(!stableCell(x, i, stable, checked,side)) {
+                u = false;
+                break;
+            }
+
+        }
+        for(int i = y-1; i >= 0; i--){
+            if(!stableCell(x, i, stable, checked,side)) {
+                d = false;
+                break;
+            }
+        }
+        if (!(d || u)) {
+            stable[x][y] = false;
+            return false;
+        }
+        //check right-up/left-down diagonal stability
+        boolean urStable = true;
+        boolean dlStable = true;
+
+        int tx = x+1;
+        int ty = y+1;
+        while(tx < 8 && ty < 8){
+            if(!stableCell(tx, ty, stable, checked,side)) urStable = false;
+            tx++;
+            ty++;
+        }
+
+        tx = x-1;
+        ty = y-1;
+        while(tx > 0 && ty > 0){
+            if(!stableCell(tx, ty, stable, checked,side)) dlStable = false;
+            tx--;
+            ty--;
+        }
+
+        //check right-down/left-up diagonal stability
+        boolean ulStable = true;
+        boolean drStable = true;
+
+        tx = x+1;
+        ty = y-1;
+        while(tx < 8 && ty > 0){
+            if(!stableCell(tx, ty, stable, checked,side)) drStable = false;
+            tx++;
+            ty--;
+        }
+
+        tx = x-1;
+        ty = y+1;
+        while(tx > 0 && ty < 8){
+            if(!stableCell(tx, ty, stable, checked,side)) ulStable = false;
+            tx--;
+            ty++;
+        }
+        stable[x][y] = (l || r) && (u || d) &&
+                (dlStable || urStable) && (ulStable || drStable);
+        return stable[x][y];
+    }
+
 }

@@ -6,5 +6,6 @@ public interface Evaluator<B extends Board> {
      * @param board edu.caltech.cs2.board to evaluate
      * @return score of the edu.caltech.cs2.board
      */
+
     int eval(B board);
 }

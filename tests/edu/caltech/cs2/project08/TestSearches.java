@@ -127,6 +127,9 @@ public class TestSearches {
         m.setEvaluator(e);
         m.setDepth(ply);
         m.getBestMove(b, 0, 0);
+        for (String k:e.positions) {
+            System.out.println(k);
+        }
 
         MatcherAssert.assertThat(e.positions,
                 IsIterableContainingInOrder.contains(ref.toArray()));
