@@ -8,9 +8,9 @@ import edu.caltech.cs2.project08.game.Evaluator;
 import edu.caltech.cs2.project08.game.Move;
 import edu.caltech.cs2.project08.interfaces.IDeque;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
+//import java.util.ArrayList;
+//import java.util.List;
+//import java.util.concurrent.ThreadLocalRandom;
 
 
 public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
@@ -30,9 +30,9 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
         //}
         //Move k = monteCarloTree(board, 10000);
         //System.out.println(k);
-        return prune(evaluator, board, ply, new BestMove(new Move(Move.PASS),-INFINITY), INFINITY).move;
+        return alphaBeta(evaluator, board, ply, new BestMove(new Move(Move.PASS),-INFINITY), INFINITY).move;
     }
-    private static <B extends Board> BestMove prune(Evaluator<B> evaluator, B board, int curDepth, BestMove a, int b) {
+    private static <B extends Board> BestMove alphaBeta(Evaluator<B> evaluator, B board, int curDepth, BestMove a, int b) {
         if (curDepth == 0 || board.isGameOver()) {
             return new BestMove(a.move, evaluator.eval(board));
         }
@@ -42,7 +42,7 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
         for (Move child : moves) {
             a.move = child;
             board.makeMove(child);
-            value = new BestMove(child, -prune(evaluator, board, curDepth - 1, new BestMove(child, -b), -a.score).score);
+            value = new BestMove(child, -alphaBeta(evaluator, board, curDepth - 1, new BestMove(child, -b), -a.score).score);
             board.undoMove();
             if (value.score > a.score) {
                 a=value;
@@ -55,7 +55,7 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
     }
 
 
-
+/**
     private static <B extends Board> BestMove alphaBeta(Evaluator<B> evaluator, B board, int depth) {
         BestMove toReturn = new BestMove(board.getMoves().peek(), -INFINITY);
         int curScore=1;
@@ -162,28 +162,14 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
                 //d++;
                 //System.out.println(d + "f");
             }
-            /**
-            if (!og.isGameOver()) {
-                System.out.println(og.getNumWhite()+og.getNumBlack());
-            }
-             **/
+
             int score = (og.getScoreVanilla()*-1*side>0 ? 1 : 0);
 
             //System.out.println(og.getScoreVanilla()*-1*side);/
-            /**
-            if (og.getNumWhite()+og.getNumBlack() < 64) {
-                System.out.println(og.getNumWhite()+og.getNumBlack());
-            }
-             **/
+
             //System.out.println((og.getScoreVanilla()*-1*side>0 ? 1 : 0)+" hh");
             //((moveBoi)searching.data).t += score;
-            /**
-            while (d > 0) {
-                d--;
-                board.undoMove();
-                //System.out.println("undo");
-            }
-             **/
+
 
             //back propagation
             s = searching;
@@ -205,11 +191,7 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
             //System.out.println("g");
         }
         System.out.println(bestScore + " " + tree.root.children.size() + " "+dNum);
-        /**
-        if (bestMove == null) {
-            assert(false);
-        }
-         **/
+
 
         return bestMove;
     }
@@ -257,4 +239,5 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
             return (float)(t/n+2*Math.sqrt(Math.log(N)/n));
         }
     }
+    **/
 }
