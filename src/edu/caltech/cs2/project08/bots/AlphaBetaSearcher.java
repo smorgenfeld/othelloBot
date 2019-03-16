@@ -15,7 +15,7 @@ import edu.caltech.cs2.project08.interfaces.IDeque;
 
 public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
     private static final float PERCENTAGE_SEQUENTIAL = 0.5f;
-    private static final int INFINITY = Integer.MAX_VALUE-10;
+    private static final int INFINITY = Integer.MAX_VALUE-1;
     @Override
     public Move getBestMove(B board, int myTime, int opTime) {
         /**
