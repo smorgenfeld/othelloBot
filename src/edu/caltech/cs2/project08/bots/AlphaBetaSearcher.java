@@ -8,13 +8,10 @@ import edu.caltech.cs2.project08.game.Evaluator;
 import edu.caltech.cs2.project08.game.Move;
 import edu.caltech.cs2.project08.interfaces.IDeque;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import edu.caltech.cs2.project08.interfaces.IGraph;
-import play.Play;
 
 public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
     private static final float PERCENTAGE_SEQUENTIAL = 0.5f;
