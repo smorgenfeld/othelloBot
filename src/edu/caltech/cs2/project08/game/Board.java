@@ -1,6 +1,9 @@
 package edu.caltech.cs2.project08.game;
 
+import edu.caltech.cs2.project08.board.ArrayBoard;
 import edu.caltech.cs2.project08.interfaces.IDeque;
+
+import java.util.ArrayList;
 
 public interface Board {
     // Stuff for Board string parsing.
@@ -57,4 +60,7 @@ public interface Board {
     // Overrides
     String toString();
     int hashCode();
+
+    void setBoard(ArrayBoard toset);
+    ArrayList<Move> getMovesRand();
 }

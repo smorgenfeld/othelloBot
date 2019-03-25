@@ -8,9 +8,9 @@ import edu.caltech.cs2.project08.game.Evaluator;
 import edu.caltech.cs2.project08.game.Move;
 import edu.caltech.cs2.project08.interfaces.IDeque;
 
-//import java.util.ArrayList;
-//import java.util.List;
-//import java.util.concurrent.ThreadLocalRandom;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 
 public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
@@ -18,19 +18,43 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
     private static final int INFINITY = Integer.MAX_VALUE-1;
     @Override
     public Move getBestMove(B board, int myTime, int opTime) {
-        /**
-        BestMove best = alphaBeta(this.evaluator, board, ply);
-        System.out.println(best.move);
-        return best.move;
-         **/
-        //return best.move;
-        //System.out.println("in");
-        //if (board.isGameOver()) {
-        //    return null;
-        //}
-        //Move k = monteCarloTree(board, 10000);
-        //System.out.println(k);
-        return alphaBeta(evaluator, board, ply, new BestMove(new Move(Move.PASS),-INFINITY), INFINITY).move;
+        //return alphaBeta(evaluator, board, ply, new BestMove(new Move(Move.PASS),-INFINITY), INFINITY).move;
+
+        int depth = 20000;
+        int processors = 4;//Runtime.getRuntime().availableProcessors() - 1;
+        Thread[] threads = new Thread[processors];
+        for (int i = 0; i < processors; i++) {
+            threads[i] = new Task(depth, (ArrayBoard) board);
+            threads[i].run();
+        }
+        for (Thread t : threads) {
+            try {
+                t.join();
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        float bestScore = -100000000;
+        Move bestMove = ((Task)threads[0]).tree.root.children.get(0).data.move;
+        int curT;
+        int curN;
+        for (int i = 0; i < ((Task)threads[0]).tree.root.children.size(); i++) {
+            curT = 0;
+            curN = 0;
+            for (Thread t : threads) {
+                curN += ((Task) t).tree.root.children.get(i).data.n;
+                curT += ((Task) t).tree.root.children.get(i).data.t;
+            }
+            if (curT > 0 && curT/((float)curN) > bestScore) {
+                bestScore = curT/((float)curN);
+                bestMove = ((Task)threads[0]).tree.root.children.get(i).data.move;
+            }
+        }
+
+        //Tree tree = monteCarloTree(board, 500);
+        System.out.println(bestScore);
+        return bestMove;
     }
     private static <B extends Board> BestMove alphaBeta(Evaluator<B> evaluator, B board, int curDepth, BestMove a, int b) {
         if (curDepth == 0 || board.isGameOver()) {
@@ -55,54 +79,36 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
     }
 
 
-/**
-    private static <B extends Board> BestMove alphaBeta(Evaluator<B> evaluator, B board, int depth) {
-        BestMove toReturn = new BestMove(board.getMoves().peek(), -INFINITY);
-        int curScore=1;
-        for (Move move : board.getMoves()) {
-            board.makeMove(move);
-            //curScore = prune(evaluator, board, depth-1, -INFINITY, INFINITY);
-            board.undoMove();
-            if (curScore>toReturn.score) {
-                toReturn=new BestMove(move, curScore);
-            }
-        }
-        return toReturn;
-    }
-
-    private <B extends Board> Move monteCarloTree(B board, int depth) {
-        //System.out.println("in");
-
-
+    private <B extends Board> Tree monteCarloTree(B board, int depth) {
         int side = (board.isBlackMove() ? -1 : 1);
-        Tree<moveBoi> tree = new Tree(new moveBoi(null));
+        Tree tree = new Tree(new moveBoi((ArrayBoard)board));
         IDeque<Move> childs = board.getMoves();
+
+        //if only one possible move just return that move
         if (childs.size()==1) {
-            return childs.removeFront();
-        }
-        for (Move child : childs) {
-            tree.root.addChild(new moveBoi(child));
-            //System.out.println("f");
+            tree.root.addChild(new moveBoi(childs.peek(), (ArrayBoard) board));
+            return tree;
         }
         Node par;
         Node searching;
-        int dNum = 0;
         float best;
         float cur;
+        ArrayBoard og = new ArrayBoard();
         for (int i = 0; i < depth; i++) {
-            //System.out.println("whole");
+
             //selection
-            ArrayBoard og = new ArrayBoard();
-            og.setBoard((ArrayBoard)board);
             par = tree.root;
-            searching = (Node)par.children.get(0);
+            searching = null;
+            if (par.children.size()!= 0) {
+                searching = par.children.get(0);
+            }
 
             while (par.children.size()!=0) {
                 //System.out.println("f");
                 best = -999999;
-                for (Node<moveBoi> child : (List<Node<moveBoi>>)par.children) {
+                for (Node child : par.children) {
 
-                    cur = child.data.ucb(((moveBoi)par.data).n);
+                    cur = child.data.ucb((par.data).n);
                     if (cur > 99999999) {
                         searching = child;
                         break;
@@ -118,117 +124,106 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
             searching = par;
 
             //Expansion
-            //int d = 0;
-            //boolean skipSimulation = false;
-            IDeque<Move> list = new LinkedDeque<>();
-            Node s = searching;
-            while (s.parent != null) {
-                list.addFront(((moveBoi)s.data).move);
-                s = s.parent;
-                //System.out.println("2");
-            }
-            while(list.size()>0) {
-                //d++;
-                og.makeMove(list.removeFront());
-                //System.out.println("3");
-            }
             //create child nodes if needed
-            if (((moveBoi)searching.data).n == 0) {
-                for (Move child : og.getMoves()) {
-                    searching.addChild(new moveBoi(child));
-                    dNum++;
+            if (searching.data.n == 0) {
+                for (Move child : searching.data.board.getMoves()) {
+                    searching.addChild(new moveBoi(child, searching.data.board));
                 }
 
-                searching=(Node)searching.children.get(0);
+                searching = searching.children.get(0);
             }
 
             //simulation/rollout
-            int size;
-            IDeque<Move> moves;
-            String lastMove="";
+            ArrayList<Move> moves;
+            og.setBoard(searching.data.board);
+            int count = og.getNumBlack()+og.getNumWhite();
             while (!og.isGameOver()) {
-                moves = og.getMoves();
-                if (lastMove.equals("PASS") && moves.size()==1) {
+                if (count > 65) {
                     break;
                 }
-                size = ThreadLocalRandom.current().nextInt(0, moves.size());
-                //System.out.println(size);
-                for (int j = 0; j < size; j++) {
-                    moves.removeBack();
-                }
-                Move toMove = moves.removeBack();
-                og.makeMove(toMove);
-                lastMove = toMove.toString();
-                //d++;
-                //System.out.println(d + "f");
+                moves = og.getMovesRand();
+                og.makeMove(moves.get(ThreadLocalRandom.current().nextInt(0, moves.size())));
+                count++;
             }
 
-            int score = (og.getScoreVanilla()*-1*side>0 ? 1 : 0);
-
-            //System.out.println(og.getScoreVanilla()*-1*side);/
-
-            //System.out.println((og.getScoreVanilla()*-1*side>0 ? 1 : 0)+" hh");
-            //((moveBoi)searching.data).t += score;
-
+            int score = (og.getScore()*-1*side>0 ? 1 : 0);
 
             //back propagation
-            s = searching;
+            Node s = searching;
             while (s != null) {
-                ((moveBoi)s.data).t += score;
-                ((moveBoi)s.data).n++;
+                s.data.t += score;
+                s.data.n++;
                 s = s.parent;
                 //System.out.println("prop");
             }
+            //System.out.println("-------------------");
         }
-        float bestScore = -100000000;
-        Move bestMove = tree.root.children.get(0).data.move;
-        for (Node<moveBoi> child : tree.root.children) {
-            //System.out.println(child.data.n + " " + child.data.t);
-            if (child.data.n>0&&child.data.t/child.data.n > bestScore) {
-                bestScore = child.data.t/child.data.n;
-                bestMove = child.data.move;
-            }
-            //System.out.println("g");
-        }
-        System.out.println(bestScore + " " + tree.root.children.size() + " "+dNum);
 
 
-        return bestMove;
+
+        return tree;
+    }
+
+    public class Task extends Thread {
+        private int depth;
+        private ArrayBoard curBoard;
+        public Tree tree;
+        public Task(int newDepth, ArrayBoard newBoard) {
+            this.depth = newDepth;
+            this.curBoard = newBoard;
+        }
+
+        public void run() {
+            this.tree = monteCarloTree(this.curBoard, this.depth);
+
+        }
     }
 
 
-    public class Tree<T> {
-        public Node<T> root;
+    public class Tree {
+        public Node root;
 
-        public Tree(T rootData) {
-            root = new Node<T>(rootData, null);
+        public Tree(moveBoi rootData) {
+            root = new Node(rootData, null);
 
         }
 
 
     }
-    public class Node<T> {
-        public T data;
-        public Node<T> parent;
-        public List<Node<T>> children;
-        public Node (T data, Node parent) {
+    public class Node {
+        public moveBoi data;
+        public Node parent;
+        public List<Node> children;
+        public Node (moveBoi data, Node parent) {
             this.parent = parent;
             this.data = data;
-            this.children = new ArrayList<Node<T>>();
+            this.children = new ArrayList<Node>();
 
         }
 
-        public void addChild(T child) {
+        public void addChild(moveBoi child) {
             this.children.add(new Node(child, this));
         }
     }
     public class moveBoi {
+        private static final float c = 1.414f;
         public Move move;
         public float t;
         public int n;
+        public ArrayBoard board;
 
-        public moveBoi(Move toAdd) {
+        public moveBoi(Move toAdd, ArrayBoard newboard) {
             this.move = toAdd;
+            this.board = new ArrayBoard();
+            this.board.setBoard(newboard);
+            this.board.makeMove(this.move);
+            this.t = 0;
+            this.n = 0;
+        }
+        public moveBoi(ArrayBoard newboard) {
+            this.move = null;
+            this.board = new ArrayBoard();
+            this.board.setBoard(newboard);
             this.t = 0;
             this.n = 0;
         }
@@ -236,8 +231,8 @@ public class AlphaBetaSearcher<B extends Board> extends AbstractSearcher<B> {
             if (n == 0 || N == 0) {
                 return 999999999;
             }
-            return (float)(t/n+2*Math.sqrt(Math.log(N)/n));
+            return (float)(t/n+c*Math.sqrt(Math.log(N)/n));
         }
     }
-    **/
+
 }

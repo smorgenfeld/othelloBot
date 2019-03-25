@@ -6,6 +6,8 @@ import edu.caltech.cs2.project08.game.Board;
 import edu.caltech.cs2.project08.interfaces.IDeque;
 import edu.caltech.cs2.project08.game.Move;
 import edu.caltech.cs2.project08.interfaces.IStack;
+import java.util.Arrays;
+import java.util.ArrayList;
 
 public class ArrayBoard implements Board {
     public static final int BLACK = -1;
@@ -52,6 +54,16 @@ public class ArrayBoard implements Board {
 
         // Empty move stack.
         moves = new LinkedDeque<>();
+    }
+
+    public void setBoard(ArrayBoard toCopy) {
+        this.moves = new LinkedDeque<>();
+        for (UndoInfo kek : toCopy.moves){
+            ((LinkedDeque<UndoInfo>) this.moves).add(kek);
+        }
+        this.board = Arrays.stream(toCopy.board).map(r -> r.clone()).toArray(int[][]::new);
+        //System.arraycopy(toCopy.board, 0, this.board, 0, toCopy.board.length);
+        this.sideToMove = toCopy.sideToMove;
     }
 
     public void makeMove(Move move) {
@@ -164,6 +176,49 @@ public class ArrayBoard implements Board {
                     // This row and col is a valid move.
                     if (row > -1 && row < 8 && col > -1 && col < 8 && board[row][col] == EMPTY && count > 1) {
                         moves.add(new Move(row * 8 + col));
+                    }
+                }
+            }
+        }
+
+        if (moves.size() == 0) {
+            moves.add(new Move(Move.PASS));
+        }
+
+        return moves;
+    }
+
+    public ArrayList<Move> getMovesRand() {
+        ArrayList<Move> moves = new ArrayList<>();
+
+        for (int r = 0; r < 8; r++) {
+            for (int c = 0; c < 8; c++) {
+                if (board[r][c] != sideToMove) {
+                    continue;
+                }
+
+                for (int[] offset : OFFSETS) {
+                    int rowOff = offset[0];
+                    int colOff = offset[1];
+                    int row = r;
+                    int col = c;
+                    int count = 0;
+
+                    // Cast until out-of-bounds, on empty, or on own disk.
+                    do {
+                        row += rowOff;
+                        col += colOff;
+                        count++;
+                    } while (row > -1 && row < 8 && col > -1 && col < 8 && board[row][col] == -sideToMove);
+
+                    // This row and col is a valid move.
+                    if (row > -1 && row < 8 && col > -1 && col < 8 && board[row][col] == EMPTY && count > 1) {
+                        moves.add(new Move(row * 8 + col));
+                        if (row == 0 && col == 0 || row == 7 && col == 0 || row == 7 && col == 7 || row == 0 && col == 7) {
+                            moves.clear();
+                            moves.add(new Move(row * 8 + col));
+                            return moves;
+                        }
                     }
                 }
             }

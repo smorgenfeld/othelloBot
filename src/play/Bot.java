@@ -13,6 +13,9 @@ public class Bot {
 /**
     public static final String BOT_NAME = "garlicBread";//"barlicBread";//
     public static final String BOT_PASS = "rzAapFfpmgMR";//"qyNXvLScYdZY";//
+
+ public static final String BOT_NAME = "garlicBread";//"barlicBread";//
+ public static final String BOT_PASS = "rzAapFfpmgMR";//"qyNXvLScYdZY";//
 **/
 
 /**
@@ -55,6 +58,8 @@ public class Bot {
      public static final String BOT_PASS = "qHKdRCgCgGlu";//
      public static final String BOT_NAME = "hahahahahahahahahahahahahahaha";//
      public static final String BOT_PASS = "PdpNGdWrSLkV";//
+
+
      public static final String BOT_NAME = "hahahahahahahahahahahahahahahaha";//
      public static final String BOT_PASS = "wjyDIItlpgIX";//
      public static final String BOT_NAME = "hahahahahahahahahahahahahahahahaha";//
@@ -63,7 +68,6 @@ public class Bot {
      public static final String BOT_PASS = "aVQxapIjpPIG";//
      public static final String BOT_NAME = "hahahahahahahahahahahahahahahahahahaha";//
      public static final String BOT_PASS = "wBvmBPHjBXXB";//
-
      **/
     public static final String BOT_NAME = "hahahaha";//
     public static final String BOT_PASS = "CtCAyuNibxto";//
@@ -82,7 +86,7 @@ public class Bot {
 
         // Make sure you set all of the necessary attributes on your searcher!
         searcher = new AlphaBetaSearcher<>();
-        searcher.setDepth(1);
+        searcher.setDepth(8);
         searcher.setEvaluator(evaluator);
     }
 
